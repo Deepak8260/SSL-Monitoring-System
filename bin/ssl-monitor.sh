@@ -2,12 +2,26 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-source "$SCRIPT_DIR/certificate.sh"
-
 # ==========================================
 # SSL CERTIFICATE MONITOR
+# Main Controller
+# ==========================================
+
+# ------------------------------------------
+# Determine script directory
+# ------------------------------------------
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# ------------------------------------------
+# Load functions
+# ------------------------------------------
+
+source "$SCRIPT_DIR/certificate.sh"
+source "$SCRIPT_DIR/renewal.sh"
+
+# ==========================================
+# CONFIGURATION
 # ==========================================
 
 CONFIG_FILE="/home/ubuntu/ssl-monitor/config/ssl-monitor.conf"
@@ -17,31 +31,49 @@ CONFIG_FILE="/home/ubuntu/ssl-monitor/config/ssl-monitor.conf"
 # ------------------------------------------
 
 if [[ ! -f "$CONFIG_FILE" ]]; then
+
     echo "ERROR: Configuration file not found:"
     echo "$CONFIG_FILE"
-    exit 1
+
+    exit 4
+
 fi
 
 source "$CONFIG_FILE"
+
+# ==========================================
+# VALIDATION
+# ==========================================
 
 # ------------------------------------------
 # Validate required configuration
 # ------------------------------------------
 
 if [[ -z "${DOMAIN:-}" ]]; then
+
     echo "ERROR: DOMAIN is not configured."
-    exit 1
+
+    exit 4
+
 fi
+
 
 if [[ -z "${CERTIFICATE:-}" ]]; then
+
     echo "ERROR: CERTIFICATE is not configured."
-    exit 1
+
+    exit 4
+
 fi
 
+
 if [[ ! -f "$CERTIFICATE" ]]; then
+
     echo "ERROR: Certificate file does not exist:"
     echo "$CERTIFICATE"
-    exit 1
+
+    exit 4
+
 fi
 
 # ------------------------------------------
@@ -49,19 +81,40 @@ fi
 # ------------------------------------------
 
 if ! command -v openssl >/dev/null 2>&1; then
+
     echo "ERROR: OpenSSL is not installed."
-    exit 1
+
+    exit 4
+
 fi
 
-# ------------------------------------------
-# Check certificate
-# ------------------------------------------
+
+if ! command -v certbot >/dev/null 2>&1; then
+
+    echo "ERROR: Certbot is not installed."
+
+    exit 4
+
+fi
+
+
+if ! command -v nginx >/dev/null 2>&1; then
+
+    echo "ERROR: Nginx is not installed."
+
+    exit 4
+
+fi
+
+# ==========================================
+# CERTIFICATE CHECK
+# ==========================================
 
 check_certificate_status
 
-# ------------------------------------------
-# Prepare monitoring output
-# ------------------------------------------
+# ==========================================
+# PREPARE MONITORING OUTPUT
+# ==========================================
 
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
@@ -79,6 +132,7 @@ Days Remaining  : $REMAINING_DAYS
 
 Warning Threshold  : $WARNING_DAYS days
 Critical Threshold : $CRITICAL_DAYS days
+Renewal Threshold  : $RENEWAL_DAYS days
 
 Status          : $STATUS
 Renewal Required: $RENEWAL_REQUIRED
@@ -86,157 +140,58 @@ Renewal Required: $RENEWAL_REQUIRED
 ==========================================
 "
 
-# ------------------------------------------
-# Display result
-# ------------------------------------------
+# ==========================================
+# DISPLAY RESULT
+# ==========================================
 
 echo "$OUTPUT"
 
-# ------------------------------------------
-# Write result to log
-# ------------------------------------------
+# ==========================================
+# WRITE RESULT TO LOG
+# ==========================================
 
 echo "$OUTPUT" >> "$LOG_FILE"
 
-# ------------------------------------------
-# Renewal function
-# ------------------------------------------
-
-renew_certificate() {
-
-    echo ""
-    echo "Renewal check started..."
-
-    # --------------------------------------
-    # No renewal required
-    # --------------------------------------
-
-    if [[ "$RENEWAL_REQUIRED" != "true" ]]; then
-        echo "Certificate does not require renewal."
-        return 0
-    fi
-
-    echo "Certificate is within the renewal window."
-    echo "Starting Certbot renewal..."
-
-    # --------------------------------------
-    # Run Certbot renewal
-    # --------------------------------------
-
-    if ! certbot renew; then
-
-        echo "ERROR: Certbot renewal failed."
-        echo "Nginx will NOT be reloaded."
-
-        return 1
-
-    fi
-
-    echo "Certbot renewal completed successfully."
-
-    # --------------------------------------
-    # Validate Nginx configuration
-    # --------------------------------------
-
-    echo "Testing Nginx configuration..."
-
-    if ! nginx -t; then
-
-        echo "ERROR: Nginx configuration test failed."
-        echo "Nginx will NOT be reloaded."
-
-        return 1
-
-    fi
-
-    echo "Nginx configuration is valid."
-
-    # --------------------------------------
-    # Reload Nginx
-    # --------------------------------------
-
-    echo "Reloading Nginx..."
-
-    if ! systemctl reload nginx; then
-
-        echo "ERROR: Nginx reload failed."
-
-        return 1
-
-    fi
-
-    echo "Nginx reloaded successfully."
-
-    # --------------------------------------
-    # Verify live HTTPS certificate
-    # --------------------------------------
-
-    echo "Verifying live HTTPS certificate..."
-
-    LIVE_EXPIRY_DATE=$(echo | openssl s_client \
-        -connect "${DOMAIN}:443" \
-        -servername "${DOMAIN}" 2>/dev/null \
-        | openssl x509 -noout -enddate \
-        | cut -d= -f2)
-
-    if [[ -z "$LIVE_EXPIRY_DATE" ]]; then
-
-        echo "ERROR: Unable to retrieve live HTTPS certificate."
-
-        return 1
-
-    fi
-
-    echo "Live certificate expiry: $LIVE_EXPIRY_DATE"
-
-    # --------------------------------------
-    # Verify live certificate domain
-    # --------------------------------------
-
-    LIVE_SUBJECT=$(echo | openssl s_client \
-        -connect "${DOMAIN}:443" \
-        -servername "${DOMAIN}" 2>/dev/null \
-        | openssl x509 -noout -subject)
-
-    echo "Live certificate: $LIVE_SUBJECT"
-
-    echo "Live HTTPS certificate verified successfully."
-
-}
-
-# ------------------------------------------
-# Execute renewal check
-# ------------------------------------------
+# ==========================================
+# RENEWAL
+# ==========================================
 
 renew_certificate
 
-# ------------------------------------------
-# Return monitoring status
-# ------------------------------------------
+# ==========================================
+# RETURN MONITORING STATUS
+# ==========================================
 
 case "$STATUS" in
 
     HEALTHY)
+
         exit 0
+
         ;;
 
     WARNING)
+
         exit 1
+
         ;;
 
     CRITICAL)
+
         exit 2
+
         ;;
 
     EXPIRED)
+
         exit 3
+
         ;;
 
     *)
+
         exit 4
+
         ;;
 
 esac
-
-
-

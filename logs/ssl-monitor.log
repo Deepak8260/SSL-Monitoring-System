@@ -176,3 +176,107 @@ Renewal Required: false
 
 ==========================================
 
+
+==========================================
+       SSL CERTIFICATE MONITOR
+==========================================
+
+Timestamp       : 2026-08-21 13:43:34
+Domain          : kumardevops.online
+Certificate     : /etc/letsencrypt/live/kumardevops.online/fullchain.pem
+
+Expiry Date     : Nov 19 08:08:00 2026 GMT
+Days Remaining  : 89
+
+Warning Threshold  : 30 days
+Critical Threshold : 7 days
+
+Status          : HEALTHY
+Renewal Required: false
+
+==========================================
+
+
+==========================================
+       SSL CERTIFICATE MONITOR
+==========================================
+
+Timestamp       : 2026-08-21 15:40:37
+Domain          : kumardevops.online
+Certificate     : /etc/letsencrypt/live/kumardevops.online/fullchain.pem
+
+Expiry Date     : Nov 19 08:08:00 2026 GMT
+Days Remaining  : 89
+
+Warning Threshold  : 30 days
+Critical Threshold : 7 days
+Renewal Threshold  : 30 days
+
+Status          : HEALTHY
+Renewal Required: false
+
+==========================================
+
+
+==========================================
+       SSL CERTIFICATE MONITOR
+==========================================
+
+Timestamp       : 2026-08-21 16:11:20
+Domain          : kumardevops.online
+Certificate     : /etc/letsencrypt/live/kumardevops.online/fullchain.pem
+
+Expiry Date     : Nov 19 08:08:00 2026 GMT
+Days Remaining  : 89
+
+Warning Threshold  : 30 days
+Critical Threshold : 7 days
+Renewal Threshold  : 30 days
+
+Status          : HEALTHY
+Renewal Required: false
+
+==========================================
+
+
+==========================================
+       SSL CERTIFICATE MONITOR
+==========================================
+
+Timestamp       : 2026-08-21 16:17:41
+Domain          : kumardevops.online
+Certificate     : /etc/letsencrypt/live/kumardevops.online/fullchain.pem
+
+Expiry Date     : Nov 19 08:08:00 2026 GMT
+Days Remaining  : 10
+
+Warning Threshold  : 30 days
+Critical Threshold : 7 days
+Renewal Threshold  : 30 days
+
+Status          : WARNING
+Renewal Required: true
+
+==========================================
+
+
+==========================================
+       SSL CERTIFICATE MONITOR
+==========================================
+
+Timestamp       : 2026-08-21 16:26:07
+Domain          : kumardevops.online
+Certificate     : /etc/letsencrypt/live/kumardevops.online/fullchain.pem
+
+Expiry Date     : Nov 19 08:08:00 2026 GMT
+Days Remaining  : 10
+
+Warning Threshold  : 30 days
+Critical Threshold : 7 days
+Renewal Threshold  : 30 days
+
+Status          : WARNING
+Renewal Required: true
+
+==========================================
+

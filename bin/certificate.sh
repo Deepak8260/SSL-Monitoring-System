@@ -25,6 +25,10 @@ get_expiry_date() {
 
 check_certificate_status() {
 
+    # --------------------------------------
+    # Get real certificate expiry
+    # --------------------------------------
+
     EXPIRY_DATE=$(get_expiry_date)
 
     EXPIRY_TIMESTAMP=$(date -d "$EXPIRY_DATE" +%s)
@@ -34,6 +38,21 @@ check_certificate_status() {
     REMAINING_SECONDS=$((EXPIRY_TIMESTAMP - CURRENT_TIMESTAMP))
 
     REMAINING_DAYS=$((REMAINING_SECONDS / 86400))
+
+
+    # --------------------------------------
+    # Demonstration mode
+    # --------------------------------------
+
+    if [[ "${DEMO_MODE:-false}" == "true" ]]; then
+
+        echo "DEMO MODE: Simulating certificate expiry."
+
+        REMAINING_DAYS="$DEMO_REMAINING_DAYS"
+
+        REMAINING_SECONDS=$((REMAINING_DAYS * 86400))
+
+    fi
 
 
     # --------------------------------------
@@ -66,7 +85,9 @@ check_certificate_status() {
     RENEWAL_REQUIRED=false
 
     if (( REMAINING_DAYS <= RENEWAL_DAYS )); then
+
         RENEWAL_REQUIRED=true
+
     fi
 
 }
