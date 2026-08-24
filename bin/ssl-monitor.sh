@@ -18,6 +18,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # ------------------------------------------
 
 source "$SCRIPT_DIR/certificate.sh"
+source "$SCRIPT_DIR/verification.sh"
+source "$SCRIPT_DIR/email.sh"
 source "$SCRIPT_DIR/renewal.sh"
 
 # ==========================================
@@ -151,6 +153,16 @@ echo "$OUTPUT"
 # ==========================================
 
 echo "$OUTPUT" >> "$LOG_FILE"
+
+# ==========================================
+# EMAIL NOTIFICATION
+# ==========================================
+
+if ! send_status_email; then
+
+    echo "WARNING: Status email could not be sent."
+
+fi
 
 # ==========================================
 # RENEWAL

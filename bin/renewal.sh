@@ -7,7 +7,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "$SCRIPT_DIR/verification.sh"
-
+source "$SCRIPT_DIR/email.sh"
 
 renew_certificate() {
 
@@ -59,8 +59,10 @@ renew_certificate() {
 
             echo "ERROR: Certbot renewal failed."
             echo "Nginx will NOT be reloaded."
-
-            return 1
+            
+	    send_renewal_failure_email	    
+           
+	    return 1
 
         fi
 
@@ -79,6 +81,8 @@ renew_certificate() {
 
         echo "ERROR: Nginx configuration test failed."
         echo "Nginx will NOT be reloaded."
+	
+	send_renewal_failure_email
 
         return 1
 
@@ -97,6 +101,8 @@ renew_certificate() {
 
         echo "ERROR: Nginx reload failed."
 
+	send_renewal_failure_email
+
         return 1
 
     fi
@@ -112,12 +118,20 @@ renew_certificate() {
 
         echo "ERROR: Live HTTPS certificate verification failed."
 
+	send_renewal_failure_email
+
         return 1
 
     fi
 
 
     echo "Renewal workflow completed successfully."
+
+    if ! send_renewal_success_email; then
+
+       echo "WARNING: Renewal success email could not be sent."
+
+    fi 
 
     return 0
 
